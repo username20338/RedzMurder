@@ -1,0 +1,117 @@
+loadstring(game:HttpGet("https://raw.githubusercontent.com/rileybeerblx2/RedZ-UI-V2/main/main.lua"))()
+
+wait(1)
+
+local plr = game.Players.LocalPlayer
+local mouse = plr:GetMouse()
+local ESPService = {}
+
+-- Configurações de ESP
+local espDistance = 200
+local function createESP(player, role)
+    local BillboardGui = Instance.new("BillboardGui", player.Character:FindFirstChild("Head"))
+    BillboardGui.Name = "ESP"
+    BillboardGui.Size = UDim2.new(0, 100, 0, 40)
+    BillboardGui.Adornee = player.Character:FindFirstChild("Head")
+    BillboardGui.AlwaysOnTop = true
+
+    local TextLabel = Instance.new("TextLabel", BillboardGui)
+    TextLabel.Size = UDim2.new(1, 0, 1, 0)
+    TextLabel.BackgroundTransparency = 1
+    TextLabel.Text = role
+    TextLabel.TextColor3 = role == "Murder" and Color3.fromRGB(255, 0, 0) or role == "Sheriff" and Color3.fromRGB(0, 0, 255) or Color3.fromRGB(255, 255, 255)
+    TextLabel.TextStrokeTransparency = 0
+    TextLabel.TextScaled = true
+end
+
+-- ESP Principal
+local function updateESP()
+    for _, v in pairs(game.Players:GetPlayers()) do
+        if v ~= plr and v.Character and v.Character:FindFirstChild("Head") and not v.Character.Head:FindFirstChild("ESP") then
+            if v.Backpack:FindFirstChild("Gun") then
+                createESP(v, "Sheriff")
+            elseif v.Character:FindFirstChild("Knife") then
+                createESP(v, "Murder")
+            else
+                createESP(v, "Innocent")
+            end
+        end
+    end
+end
+
+-- Alertar quando Murder estiver próximo
+local function alertMurderNear()
+    while wait(1) do
+        for _, v in pairs(game.Players:GetPlayers()) do
+            if v ~= plr and v.Character and v.Character:FindFirstChild("Knife") and v.Character:FindFirstChild("HumanoidRootPart") then
+                local dist = (plr.Character.HumanoidRootPart.Position - v.Character.HumanoidRootPart.Position).magnitude
+                if dist < 30 then
+                    game.StarterGui:SetCore("SendNotification", {
+                        Title = "⚠️ Cuidado!",
+                        Text = "O Murder está muito perto!",
+                        Duration = 2
+                    })
+                end
+            end
+        end
+    end
+end
+
+-- Fling Murder
+local function flingMurder()
+    for _, v in pairs(game.Players:GetPlayers()) do
+        if v ~= plr and v.Character and v.Character:FindFirstChild("Knife") then
+            local murderHRP = v.Character:FindFirstChild("HumanoidRootPart")
+            local myHRP = plr.Character:FindFirstChild("HumanoidRootPart")
+            if murderHRP and myHRP then
+                myHRP.CFrame = murderHRP.CFrame + Vector3.new(0, 3, 0)
+                wait(0.2)
+                myHRP.Velocity = Vector3.new(9999, 9999, 9999)
+            end
+        end
+    end
+end
+
+-- Noclip
+local noclipActive = false
+game:GetService("RunService").Stepped:Connect(function()
+    if noclipActive then
+        for _, v in pairs(plr.Character:GetDescendants()) do
+            if v:IsA("BasePart") then
+                v.CanCollide = false
+            end
+        end
+    end
+end)
+
+-- Interface
+local Redz = _G.RedzUI:Window("Murder Interface")
+
+Redz:Toggle("Noclip", false, function(state)
+    noclipActive = state
+end)
+
+Redz:Button("Ativar ESP", function()
+    updateESP()
+end)
+
+Redz:Button("Fling Murder", function()
+    flingMurder()
+end)
+
+Redz:Button("Freeze All", function()
+    for _, v in pairs(game.Players:GetPlayers()) do
+        if v ~= plr and v.Character then
+            local hrp = v.Character:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                hrp.Anchored = true
+            end
+        end
+    end
+end)
+
+Redz:Button("Ativar Alerta de Murder", function()
+    spawn(alertMurderNear)
+end)
+
+Redz:Label("Criado por Carlos & ChatGPT", Color3.fromRGB(0, 255, 255))
